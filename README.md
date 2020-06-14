@@ -298,3 +298,10 @@ output "ec2-public-ip" {
 ```
 
 ・`terraform fmt`, `terraform validate`, `terraform plan`, `terraform apply`の実施
+
+### 手順(10)
+作成したリソースの削除
+
+・`terrform destroy`の実施
+
+※AWSコンソールから作成したものはAWSコンソールから削除してください
