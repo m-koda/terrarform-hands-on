@@ -198,3 +198,103 @@ resource "aws_route_table_association" "public-a" {
   route_table_id = aws_route_table.public-a.id
 }
 ```
+
+### 手順(8)
+AWSコンソールからキーペアを作成する
+
+### 手順(9)
+手順(7)で作成したパブリックサブネットにEC2をたてる
+
+・以下の内容でsecurity_group.tfを作成する
+```
+resource "aws_security_group" "terraform-hands-on" {
+  vpc_id = aws_vpc.main.id
+  name   = "terraform-hands-on"
+
+  tags = {
+    Name = "terraform-hands-on"
+  }
+}
+
+resource "aws_security_group_rule" "in_ssh" {
+  security_group_id = aws_security_group.terraform-hands-on.id
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+}
+
+resource "aws_security_group_rule" "out_all" {
+  security_group_id = aws_security_group.terraform-hands-on.id
+  type              = "egress"
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+}
+```
+
+・以下の内容でec2.tfを作成する
+```
+resource "aws_instance" "example" {
+  ami                    = data.aws_ami.amazon-linux-2.image_id
+  vpc_security_group_ids = [aws_security_group.terraform-hands-on.id]
+  subnet_id              = aws_subnet.public-a.id
+  key_name               = "terraform-hands-on"
+  instance_type          = "t2.micro"
+
+  tags = {
+    Name = "terraform-hands-on"
+  }
+}
+
+data "aws_ami" "amazon-linux-2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "block-device-mapping.volume-type"
+    values = ["gp2"]
+  }
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
+}
+```
+
+・vpc.tfのaws_subnet(public-a)に以下を追加する
+```
+map_public_ip_on_launch = true
+```
+
+・outputs.tfを以下の内容で作成する
+```
+output "ec2-public-ip" {
+  value = aws_instance.example.public_ip
+}
+```
+
+・`terraform fmt`, `terraform validate`, `terraform plan`, `terraform apply`の実施
