@@ -25,7 +25,7 @@ AWSプロバイダーの設定し、`terraform init`を実行する
 
 ・provider.tf
 
-```json
+```
 provider "aws" {
   region  = "ap-northeast-1"
 }
@@ -160,3 +160,14 @@ Plan: 1 to add, 0 to change, 0 to destroy.
 
 ・`terraform apply`の実施
 
+### 手順(6)
+IGWの作成
+
+・vpc.tfに以下を追加する
+```
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+```
+
+・`terraform fmt`, `terraform validate`, `terraform plan`, `terraform apply`の実施
